@@ -20,19 +20,12 @@ function handleFiles() {
     var reader = new FileReader();
     reader.onload = function(event) {
         czml = JSON.parse(event.target.result);
-        
         // Add czml
         czmlDataSource = new Cesium.CzmlDataSource();
-        czmlDataSource.load(czml);
-
-        customPropertyObject = czmlDataSource.entities.getById('custom_properties');
-        customAttractor = customPropertyObject.properties.custom_attractor.getValue();
-        if (customAttractor) {
-            // Parse custom properties
-            setCustomProperties();
-            // Parse orbital data
+        czmlDataSource.load(czml).then(function(czmlDataSource) {
             viewer.dataSources.add(czmlDataSource);
-        }
+     
+        });
     };
 
     reader.onerror = function(event) {
@@ -120,54 +113,7 @@ var viewer = new Cesium.Viewer('cesiumContainer', {
     baseLayerPicker: !customAttractor,
 });
 
-// If a custom attractor is defined, load the data from the custom packet
-function setCustomProperties() {
-    viewer.destroy();
-    
-    var _scene = Cesium.SceneMode.SCENE3D;
-    
-	var _ellipsoid = customPropertyObject.properties.ellipsoid.getValue();
-    
-	var _imagery = customPropertyObject.properties.map_url.getValue();
-	
-	if (!customPropertyObject.properties.scene3D.getValue()) {
-		_scene = Cesium.SceneMode.SCENE2D;
-	}
-	
-    ellipsoid = new Cesium.Ellipsoid(_ellipsoid[0], _ellipsoid[1], _ellipsoid[2]);
-    
-	var _tiling_scheme = new Cesium.WebMercatorTilingScheme({
-		ellipsoid: ellipsoid
-	});
-	
-	var terrainProvider = new Cesium.EllipsoidTerrainProvider({
-		tilingScheme: _tiling_scheme,
-		ellipsoid: ellipsoid
-	});
-	
-    imagery = new Cesium.SingleTileImageryProvider({
-        ellipsoid: ellipsoid,
-        url: Cesium.buildModuleUrl(_imagery)
-    });
 
-
-    Globe = new Cesium.Globe(ellipsoid);
-
-    viewer = new Cesium.Viewer('cesiumContainer', {
-        // Set the ellipsoid
-        globe: new Cesium.Globe(ellipsoid),
-        imageryProvider: imagery,
-		terrainProvider: terrainProvider,
-		sceneMode: _scene,
-    });
-
-    scene = viewer.scene;
-	
-	if (customPropertyObject.properties.scene3D.getValue()) {
-		viewer.scene.postUpdate.addEventListener(icrf);
-		viewer.scene.postUpdate.addEventListener(cameraControl);
-	}
-}
 
 scene = viewer.scene;
 
